@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>Genesys Real-Time Hub</title>
+    <meta name="description" content="Dashboard de Genesys en Python" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet" />
+    <script>
+      try {
+        if (localStorage.getItem('genesys-dashboard-theme') === 'light') {
+          document.documentElement.dataset.theme = 'light';
+        }
+      } catch (error) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  </head>
+  <body>
+    <div class="dashboard-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-icon">●</div>
+          <div>
+            <h1>Genesys PureCloud Real-Time Hub</h1>
+            <div class="meta-row">
+              <span>DNIS: <strong>{{ dnis }}</strong></span>
+              <span class="dot">•</span>
+              <span>Media: <strong>{{ media.upper() }}</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="status-pill">
+            <span class="status-dot"></span>
+            <span>Connected</span>
+            <span class="status-time">Updated {{ updated_at }}</span>
+          </div>
+          <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar a modo claro" title="Cambiar a modo claro" aria-pressed="false">
+            <span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">☼</span>
+            <span id="themeToggleLabel">Modo claro</span>
+          </button>
+          <button class="refresh-btn" id="refreshBtn" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <div class="toolbar">
+        <div class="range-pills">
+          <span class="range-label">Range:</span>
+          <button class="range-pill active" data-range="today" type="button" aria-pressed="true">Real-Time (Today)</button>
+          <button class="range-pill" data-range="yesterday" type="button" aria-pressed="false">Yesterday</button>
+          <button class="range-pill" data-range="7d" type="button" aria-pressed="false">Last 7 Days</button>
+        </div>
+        <label class="team-selector" for="teamFilter">
+          <span>Equipo</span>
+          <select id="teamFilter" aria-label="Filtrar toda la página por equipo">
+            <option value="all" {% if selected_team == 'all' %}selected{% endif %}>Todos</option>
+            {% for team in teams %}
+            <option value="{{ team }}" {% if selected_team == team %}selected{% endif %}>{{ team }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <main class="content">
+        <section class="stats-grid">
+          <article class="stat-card amber">
+            <div class="card-head">
+              <span>Queue Calls Waiting</span>
+              <span class="icon">☎</span>
+            </div>
+            <div class="card-value" data-field="active_waiting">{{ queue_metrics.active_waiting }}</div>
+          </article>
+
+          <article class="stat-card rose">
+            <div class="card-head">
+              <span>Max Queue Wait</span>
+              <span class="icon">⏱</span>
+            </div>
+            <div class="card-value" data-field="longest_wait_sec">{{ queue_metrics.longest_wait_sec }}s</div>
+          </article>
+
+          <article class="stat-card emerald">
+            <div class="card-head">
+              <span>Idle Agents</span>
+              <span class="icon">✓</span>
+            </div>
+            <div class="card-value" data-field="available_agents">{{ queue_metrics.available_agents }}</div>
+          </article>
+
+          <article class="stat-card cyan">
+            <div class="card-head">
+              <span>Agents On-Call</span>
+              <span class="icon">🎧</span>
+            </div>
+            <div class="card-value" data-field="busy_agents">{{ queue_metrics.busy_agents }}</div>
+          </article>
+
+          <article class="stat-card violet">
+            <div class="card-head">
+              <span>Wrap-Up State</span>
+              <span class="icon">▣</span>
+            </div>
+            <div class="card-value" data-field="wrap_up_agents">{{ queue_metrics.wrap_up_agents }}</div>
+          </article>
+
+          <article class="stat-card slate">
+            <div class="card-head">
+              <span>Active DNIS Route</span>
+              <span class="icon">◌</span>
+            </div>
+            <div class="card-value mono">{{ dnis }}</div>
+          </article>
+        </section>
+
+        <section class="metrics-grid">
+          <article class="metric-card cyan">
+            <div class="metric-head"><span>Total Offered</span><span class="metric-icon">⌁</span></div>
+            <div class="metric-row">
+              <strong data-metric="offered">{{ metrics.offered }}</strong>
+              <span class="up">+4.2%</span>
+            </div>
+          </article>
+
+          <article class="metric-card emerald">
+            <div class="metric-head"><span>Total Answered</span><span class="metric-icon">✔</span></div>
+            <div class="metric-row">
+              <strong data-metric="answered">{{ metrics.answered }}</strong>
+              <span class="up">+3.1%</span>
+            </div>
+          </article>
+
+          <article class="metric-card rose">
+            <div class="metric-head"><span>Abandoned</span><span class="metric-icon">!</span></div>
+            <div class="metric-row">
+              <strong data-metric="abandoned">{{ metrics.abandoned }}</strong>
+              <span class="down">-1.4%</span>
+            </div>
+          </article>
+
+          <article class="metric-card violet">
+            <div class="metric-head"><span>Answer Rate</span><span class="metric-icon">%</span></div>
+            <div class="metric-row">
+              <strong data-metric="answer_rate" data-metric-unit="%">{{ metrics.answer_rate }}%</strong>
+              <span class="up">+1.8%</span>
+            </div>
+          </article>
+
+          <article class="metric-card amber">
+            <div class="metric-head"><span>SLA</span><span class="metric-icon">◎</span></div>
+            <div class="metric-row">
+              <strong data-metric="sla" data-metric-unit="%">{{ metrics.sla }}%</strong>
+              <span class="up">+0.7%</span>
+            </div>
+          </article>
+
+          <article class="metric-card sky">
+            <div class="metric-head"><span>ASA</span><span class="metric-icon">◔</span></div>
+            <div class="metric-row">
+              <strong data-metric="asa" data-metric-unit="s">{{ metrics.asa }}s</strong>
+              <span class="down">-2.1%</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="licenses-section panel">
+          <div class="panel-head licenses-head">
+            <h2>Licencias y capacidad del entorno</h2>
+            <span class="pill-status {{ licenses.status_key }}" id="licenseStatus">Estado {{ licenses.status }}</span>
+          </div>
+
+          <div class="licenses-summary">
+            <div class="license-card license-total">
+              <span>Total licencias</span>
+              <strong data-license-field="total">{{ licenses.total }}</strong>
+            </div>
+            <div class="license-card license-used">
+              <span>En uso</span>
+              <strong data-license-field="used">{{ licenses.used }}</strong>
+            </div>
+            <div class="license-card license-available">
+              <span>Disponibles</span>
+              <strong data-license-field="available">{{ licenses.available }}</strong>
+            </div>
+            <div class="license-card license-pending">
+              <span>Pendientes</span>
+              <strong data-license-field="pending">{{ licenses.pending }}</strong>
+            </div>
+            <div class="license-card license-expiring">
+              <span>Próximas a vencer</span>
+              <strong data-license-field="expiring_soon">{{ licenses.expiring_soon }}</strong>
+            </div>
+          </div>
+
+          <div class="license-detail-grid">
+            <div class="utilization-box">
+              <div class="utilization-header">
+                <span>Utilización total</span>
+                <strong>{{ licenses.utilization }}%</strong>
+              </div>
+              <div class="progress-bar">
+                <span id="licenseUtilizationBar" class="{{ licenses.status_key }}" style="width: {{ licenses.utilization }}%"></span>
+              </div>
+              <div class="utilization-meta">
+                <small>Capacidad operativa actual</small>
+                <small>{{ licenses.available }} licencias libres</small>
+              </div>
+            </div>
+
+            <div class="license-list">
+              {% for item in licenses.by_type %}
+              <div class="license-item" data-license-type="{{ item.name }}">
+                <div class="license-item-top">
+                  <span>{{ item.name }}</span>
+                  <strong data-license-type-count>{{ item.used }}/{{ item.capacity }}</strong>
+                </div>
+                <div class="progress-bar small">
+                  <span data-license-type-bar style="width: {{ item.utilization }}%"></span>
+                </div>
+                <div class="license-item-meta">
+                  <small data-license-type-utilization>{{ item.utilization }}% en uso</small>
+                  <small data-license-type-available>{{ item.available }} libres</small>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="license-monitor-section panel">
+          <div class="panel-head monitor-head">
+            <div>
+              <h2>Monitoreo en tiempo real de licencias</h2>
+              <p class="demo-notice">Datos de demostración; requiere integración con Genesys para reflejar usuarios reales.</p>
+            </div>
+            <div class="monitor-meta">
+              <span>Actualiza cada 5 min</span>
+              <span id="monitorUpdatedAt">Actualizando...</span>
+            </div>
+          </div>
+
+          <div class="monitor-summary">
+            <article class="monitor-stat">
+              <span>Licencias en uso</span>
+              <strong id="monitorUsed">--</strong>
+              <small id="monitorUtilization">--% de capacidad</small>
+            </article>
+            <article class="monitor-stat">
+              <span>Usuarios online</span>
+              <strong id="monitorOnline">--</strong>
+              <small id="monitorOnlineTime">Tiempo acumulado --</small>
+            </article>
+            <article class="monitor-stat">
+              <span>Usuarios offline</span>
+              <strong id="monitorOffline">--</strong>
+              <small id="monitorOfflineTime">Tiempo acumulado --</small>
+            </article>
+            <article class="monitor-stat">
+              <span>Licencias disponibles</span>
+              <strong id="monitorAvailable">--</strong>
+              <small>Capacidad total: <span id="monitorCapacity">55</span></small>
+            </article>
+          </div>
+
+          <div class="license-alert-row">
+            <div class="license-alert-track"><span id="licenseUsageBar"></span></div>
+            <strong id="licenseAlert" class="license-alert">Calculando estado</strong>
+            <small>Estable: 0-45 · Alerta: 46-50 · Crítico: 51-55</small>
+          </div>
+
+          <div class="distribution-grid">
+            <div class="distribution-block"><h3>Por tipo de licencia</h3><div id="distributionType"></div></div>
+            <div class="distribution-block"><h3>Por perfil</h3><div id="distributionRole"></div></div>
+            <div class="distribution-block"><h3>Por organización</h3><div id="distributionOrganization"></div></div>
+          </div>
+
+          <div class="monitor-table-wrap">
+            <table class="report-table">
+              <thead><tr>
+                <th>Usuario</th><th>Conexión</th><th>Tiempo en estado</th><th>Licencia</th>
+                <th>Estado cola</th><th>Disponible</th><th>Atención</th><th>ACW</th><th>Pausa</th><th>Ocupación</th>
+              </tr></thead>
+              <tbody id="monitorAgentRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="license-report-section panel">
+          <div class="panel-head report-head">
+            <div>
+              <h2>Reportería exportable de asesores</h2>
+              <p>Sesiones, estados de cola, ocupación y consumo de licencias.</p>
+            </div>
+            <a class="export-btn" id="exportLicenseReport" href="/reports/licenses.csv">Exportar CSV</a>
+          </div>
+
+          <form id="licenseReportFilters" class="report-filters">
+            <label>Desde<input name="from" type="date" value="{{ today }}" required /></label>
+            <label>Hasta<input name="to" type="date" value="{{ today }}" required /></label>
+            <label>Hora inicio<input name="start_time" type="time" value="00:00" required /></label>
+            <label>Hora fin<input name="end_time" type="time" value="23:59" required /></label>
+            <label>Campaña<select name="campaign"><option value="">Todas</option>{% for campaign in campaigns %}<option value="{{ campaign }}">{{ campaign }}</option>{% endfor %}</select></label>
+            <label>Supervisor<select name="supervisor"><option value="">Todos</option>{% for supervisor in supervisors %}<option value="{{ supervisor }}">{{ supervisor }}</option>{% endfor %}</select></label>
+            <label>Perfil<select name="profile"><option value="">Todos</option>{% for profile in profiles %}<option value="{{ profile }}">{{ profile }}</option>{% endfor %}</select></label>
+            <button class="report-submit" type="submit">Consultar</button>
+            <span id="reportResultCount" class="report-result-count">-- registros</span>
+          </form>
+
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead><tr>
+                <th>Fecha</th><th>Usuario</th><th>Login</th><th>Logout</th><th>Conexión</th><th>Tiempo sesión</th><th>Tiempo estado</th>
+                <th>Estado cola</th><th>Cola</th><th>Disponible</th><th>Atención</th><th>ACW</th>
+                <th>Pausa</th><th>Ocupación</th><th>Licencia</th><th>Equipo</th><th>Campaña</th>
+                <th>Supervisor</th><th>Perfil</th>
+              </tr></thead>
+              <tbody id="licenseReportRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="management-board panel">
+          <div class="panel-head management-head">
+            <h2>Tablero de control de gestión</h2>
+            <div class="period-toggle">
+              <button class="period-btn active" data-period="interval" type="button">30 min</button>
+              <button class="period-btn" data-period="date" type="button">Por fecha</button>
+              <button class="period-btn" data-period="month" type="button">Por mes</button>
+              <button class="period-btn" data-period="year" type="button">Anual</button>
+            </div>
+          </div>
+
+          <div class="period-filters">
+            <label class="period-filter" data-filter="date" hidden>
+              <span>Fecha</span>
+              <input id="reportDate" type="date" value="{{ today }}" />
+            </label>
+            <label class="period-filter" data-filter="month" hidden>
+              <span>Mes</span>
+              <input id="reportMonth" type="month" value="{{ current_month }}" />
+            </label>
+            <label class="period-filter" data-filter="year" hidden>
+              <span>Año</span>
+              <input id="reportYear" type="number" min="2000" max="2100" value="{{ current_year }}" />
+            </label>
+            <span class="report-period-label" id="reportPeriodLabel">Intervalos de 30 minutos</span>
+          </div>
+
+          <div class="management-grid">
+            <div class="management-card accent-cyan">
+              <span>Inbound handled</span>
+              <strong data-management-summary="handled">--</strong>
+              <small>Contactos atendidos en el periodo</small>
+            </div>
+            <div class="management-card accent-emerald">
+              <span>Contact rate</span>
+              <strong data-management-summary="contact_rate">--</strong>
+              <small>Atendidos sobre ofrecidos</small>
+            </div>
+            <div class="management-card accent-amber">
+              <span>Average wait</span>
+              <strong data-management-summary="average_wait">--</strong>
+              <small>Espera promedio (segundos)</small>
+            </div>
+            <div class="management-card accent-violet">
+              <span>Occupancy</span>
+              <strong data-management-summary="occupancy">--</strong>
+              <small>Ocupación estimada</small>
+            </div>
+          </div>
+
+          <div class="control-table-wrap">
+            <table class="control-table">
+              <thead>
+                <tr>
+                  <th>Intervalo</th>
+                  <th>Offered</th>
+                  <th>Answered</th>
+                  <th>Abandon</th>
+                  <th>SLA</th>
+                  <th>ASA</th>
+                  <th>Agents</th>
+                </tr>
+              </thead>
+              <tbody id="managementRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel-grid">
+          <article class="panel chart-panel">
+            <div class="panel-head">
+              <h2>Offered vs Answered</h2>
+            </div>
+            <div class="chart-wrap">
+              <svg id="chart" viewBox="0 0 820 250" preserveAspectRatio="none" aria-label="Chart"></svg>
+            </div>
+          </article>
+
+          <article class="panel table-panel">
+            <div class="panel-head">
+              <h2>Tiempo de atención</h2>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Talk</td><td>{{ metrics.aht }}s</td></tr>
+                  <tr><td>Hold</td><td>{{ metrics.asa }}s</td></tr>
+                  <tr><td>ACW</td><td>{{ metrics.sla }}%</td></tr>
+                  <tr><td>Abandon rate</td><td>{{ metrics.abandon_rate }}%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+</html>

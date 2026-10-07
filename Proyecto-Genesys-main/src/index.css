@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg-1: #060b14;
+  --bg-2: #0b1220;
+  --panel: rgba(15, 23, 42, 0.88);
+  --panel-strong: rgba(15, 23, 42, 0.95);
+  --line: rgba(148, 163, 184, 0.12);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --shadow: rgba(2, 6, 23, 0.35);
+  color: var(--text);
+  background-color: var(--bg-1);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+  min-width: 0;
+  height: 100%;
+}
+body {
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 18%),
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.10), transparent 22%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+}
+button, input, select { font: inherit; }
+::selection {
+  background: rgba(34, 211, 238, 0.35);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.55);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.dashboard-shell {
+  background: linear-gradient(180deg, rgba(7, 11, 20, 0.98), rgba(11, 18, 32, 0.96));
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.glass-panel,
+.metric-card,
+.chart-panel,
+.bg-slate-900,
+.bg-slate-950,
+.bg-slate-800,
+.bg-slate-900\/90,
+.bg-slate-800\/60 {
+  background: var(--panel) !important;
+  border-color: var(--line) !important;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.25), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+.glass-panel {
+  backdrop-filter: blur(10px);
+}
+
+.metric-card,
+.chart-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+}
+
+.metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  opacity: 0.9;
+}
+
+.metric-card--cyan::before { background: linear-gradient(90deg, rgba(86, 187, 255, 0.95), rgba(86, 187, 255, 0.12)); }
+.metric-card--emerald::before { background: linear-gradient(90deg, rgba(52, 211, 153, 0.95), rgba(52, 211, 153, 0.12)); }
+.metric-card--rose::before { background: linear-gradient(90deg, rgba(251, 113, 133, 0.95), rgba(251, 113, 133, 0.12)); }
+.metric-card--violet::before { background: linear-gradient(90deg, rgba(165, 180, 252, 0.95), rgba(165, 180, 252, 0.12)); }
+.metric-card--amber::before { background: linear-gradient(90deg, rgba(252, 211, 77, 0.95), rgba(252, 211, 77, 0.12)); }
+.metric-card--sky::before { background: linear-gradient(90deg, rgba(147, 197, 253, 0.95), rgba(147, 197, 253, 0.12)); }
+
+.dashboard-shell .text-slate-300,
+.dashboard-shell .text-slate-400,
+.dashboard-shell .text-slate-500,
+.dashboard-shell .text-slate-600,
+.dashboard-shell .text-slate-700,
+.dashboard-shell .text-slate-800,
+.dashboard-shell .text-slate-900,
+.dashboard-shell .text-white,
+.dashboard-shell .text-slate-100,
+.dashboard-shell .text-slate-200 {
+  color: var(--text) !important;
+}
+
+.dashboard-shell .text-slate-400,
+.dashboard-shell .text-slate-500,
+.dashboard-shell .text-slate-600,
+.dashboard-shell .text-slate-700 {
+  color: var(--muted) !important;
+}
+
+.dashboard-shell .border-slate-800,
+.dashboard-shell .border-slate-700,
+.dashboard-shell .border-slate-800\/80,
+.dashboard-shell .border-slate-800\/60,
+.dashboard-shell .border-slate-900,
+.dashboard-shell .border-slate-700\/40,
+.dashboard-shell .border-slate-700\/60,
+.dashboard-shell .border-slate-900\/80 {
+  border-color: var(--line) !important;
+}
+
+.dashboard-shell .tab-button {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(148, 163, 184, 0.1) !important;
+  color: var(--text) !important;
+}
+
+.dashboard-shell .tab-button:hover {
+  background: rgba(15, 23, 42, 1) !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+@media (max-width: 640px) {
+  .dashboard-shell .metric-card {
+    border-radius: 1.1rem;
+  }
+}
